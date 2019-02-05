@@ -1,0 +1,29 @@
+{
+  "name": "ds-db",
+  "version": "0.0.1",
+  "description": "Dead-simple relational database",
+  "main": "lib/index.js",
+  "scripts": {
+    "test": "mocha test/**/*.test.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kendru/ds-db.git"
+  },
+  "keywords": [
+    "ds-tools",
+    "database",
+    "index"
+  ],
+  "author": "Andrew Meredith <andrew@lambdasoftware.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/kendru/ds-db/issues"
+  },
+  "homepage": "https://github.com/kendru/ds-db#readme",
+  "devDependencies": {
+    "chai": "^4.2.0",
+    "mocha": "^5.2.0",
+    "sinon": "^7.2.3"
+  }
+}
