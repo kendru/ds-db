@@ -15,12 +15,14 @@ describe('Table', () => {
     });
 
     it('should increase the table size on insert', () => {
-        t.insert({
-            id: 123,
-            name: 'Andrew',
-            age: 29
-        });
+        t.insert({ id: 123 });
         expect(t.size).to.equal(1);
+    });
+
+    it('should decrease the table size on delete', () => {
+        t.insert({ id: 123, });
+        t.delete('id', 123)
+        expect(t.size).to.equal(0);
     });
 
     it('should lookup an inserted record by property', () => {
@@ -31,8 +33,37 @@ describe('Table', () => {
         };
         t.insert(record);
 
-        expect(t.lookup('id', 0)).to.be.empty;
         expect(t.lookup('id', 123)).to.eql([record]);
+    });
+
+    it('should return an empty list when no records found', () => {
+        expect(t.lookup('id', 0)).to.be.empty;
+    });
+
+    it('should return an a list with multiple elements when multiple records match lookup', () => {
+        t.insert({ metric: 'cpu', value: 12 });
+        t.insert({ metric: 'memory', value: 52985473 });
+        t.insert({ metric: 'cpu', value: 8 });
+
+        const results = t.lookup('metric', 'cpu');
+        expect(results.length).to.equal(2);
+        expect(results).to.deep.include.members([
+            { metric: 'cpu', value: 12 },
+            { metric: 'cpu', value: 8 }
+        ]);
+    });
+
+    it('should delete a single record', () => {
+        t.insert({ id: 123, });
+        t.delete('id', 123);
+        expect(t.lookup('id', 123)).to.be.empty;
+    });
+
+    it('should delete a single record', () => {
+        t.insert({ metric: 'cpu', value: 12 });
+        t.insert({ metric: 'cpu', value: 38 });
+        t.delete('metric', 'cpu');
+        expect(t.lookup('metric', 'cpu')).to.be.empty;
     });
 
     describe('scans', () => {
@@ -150,5 +181,9 @@ describe('Table', () => {
         expect(t.lookup('id', 2)[0].name).to.equal('Dianne');
         expect(t.lookup('name', 'Adam').map(r => r.id)).to.eql([1, 6]);
         expect(t.range('birthday', '2000').map(r => r.name)).to.eql(['Aubrey', 'John', 'Abe']);
+
+        t.delete('id', 5);
+
+        expect(t.lookup('name', 'Abe')).to.be.empty;
     });
 });

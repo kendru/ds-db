@@ -17,6 +17,55 @@ describe('Skip List', () => {
         expect(idx.lookup(42)).to.be.null;
     });
 
+    it('should delete an element', () => {
+        idx.insert(5, 'five');
+        idx.delete(5);
+        expect(idx.lookup(5)).to.be.null;
+    });
+
+    it('should delete an single value associated with a key', () => {
+        idx.insert(5, 'five');
+        idx.insert(5, 'пет');
+        idx.delete(5, 'five');
+
+        expect(idx.lookup(5)).to.eql(['пет']);
+
+        idx.delete(5, 'пет');
+        expect(idx.lookup(5)).to.be.null;
+    });
+
+    it('should allow null values to be inserted and looked up', () => {
+        idx.insert('i-am-null', null);
+        expect(idx.lookup('i-am-null')).to.eql([null]);
+    });
+
+    it('should allow null values to be deleted', () => {
+        idx.insert('i-am-null', null);
+        idx.insert('i-am-null', 42);
+
+        idx.delete('i-am-null', null);
+
+        expect(idx.lookup('i-am-null')).to.eql([42]);
+    });
+
+    it('should delete an element that has copies in multiple levels', () => {
+        const elems = [];
+        for (let i = 0; i < 100; i++) {
+            elems.push(Math.floor(Math.random() * 500000));
+        }
+
+        for (const e of elems) {
+            idx.insert(e, e);
+        }
+
+        idx.delete(elems[50]);
+
+        expect(idx.lookup(elems[50])).to.be.null;
+
+        expect(idx.lookup(elems[49])).to.eql([elems[49]]);
+        expect(idx.lookup(elems[51])).to.eql([elems[51]]);
+    });
+
     it('should insert and lookup multiple elements', () => {
         idx.insert(5, 'five');
         idx.insert(6, 'six');
