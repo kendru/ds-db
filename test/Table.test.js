@@ -166,6 +166,33 @@ describe('Table', () => {
         ]);
     });
 
+    it('should use an index to lookup a record for update when possible', () => {
+        const mockIdIndex = {
+            insert: sinon.stub(),
+            lookup: sinon.stub(),
+        };
+        t.createIndex('id', mockIdIndex);
+        t.insert({ id: 123, name: 'test' });
+
+        t.update('id', 123, { name: 'new name' });
+
+        sinon.assert.calledWithExactly(mockIdIndex.lookup, 123);
+    });
+
+    it('should update multiple records', () => {
+        t.insert({ metric: 'cpu', value: 2 });
+        t.insert({ metric: 'mem', value: 54321 });
+        t.insert({ metric: 'cpu', value: 8 });
+        t.update('metric', 'cpu', { value: 0 });
+
+        const results = t.range('metric');
+        expect(results.length).to.equal(3);
+        expect(results).to.deep.include.members([
+            { metric: 'cpu', value: 0 },
+            { metric: 'mem', value: 54321 }
+        ]);
+    });
+
     it('should update an index when an indexed column is modified', () => {
         const mockNameIndex = {
             insert: sinon.stub(),
