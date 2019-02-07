@@ -1,6 +1,6 @@
 {
   "name": "ds-db",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Dead-simple relational database",
   "main": "lib/index.js",
   "scripts": {
