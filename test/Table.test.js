@@ -88,7 +88,8 @@ describe('Table', () => {
 
             it('should use an index if present', () => {
                 const mockIndex = {
-                    scan: sinon.stub().returns([1,2])
+                    scan: sinon.stub().returns([1,2]),
+                    insert: sinon.stub()
                 };
                 t.createIndex('id', mockIndex);
 
@@ -108,7 +109,8 @@ describe('Table', () => {
 
             it('should use an index if present', () => {
                 const mockIndex = {
-                    scan: sinon.stub().returns([1,2])
+                    scan: sinon.stub().returns([1,2]),
+                    insert: sinon.stub()
                 };
                 t.createIndex('id', mockIndex);
 
@@ -131,7 +133,8 @@ describe('Table', () => {
 
             it('should use an index if present', () => {
                 const mockIndex = {
-                    scan: sinon.stub().returns([1,2])
+                    scan: sinon.stub().returns([1,2]),
+                    insert: sinon.stub()
                 };
                 t.createIndex('id', mockIndex);
 
@@ -140,6 +143,64 @@ describe('Table', () => {
             });
         });
     })
+
+    it('should populate all indexes when created', () => {
+        const existingRecord = { id: 123, name: 'test' };
+        const mockIdIndex = { insert: sinon.stub() };
+        const mockNameIndex = { insert: sinon.stub() };
+        t.insert(existingRecord);
+
+        t.createIndex('id', mockIdIndex);
+        sinon.assert.calledWithExactly(mockIdIndex.insert, 123, 0);
+
+        t.createIndex('name', mockNameIndex);
+        sinon.assert.calledWithExactly(mockNameIndex.insert, 'test', 0);
+    });
+
+    it('should update a record', () => {
+        t.insert({ id: 123, name: 'test', oldAttr: 'unchanged' });
+        t.update('id', 123, { name: 'new name', newAttr: 'something' });
+
+        expect(t.lookup('id', 123)).to.eql([
+            { id: 123, name: 'new name', oldAttr: 'unchanged', newAttr: 'something' }
+        ]);
+    });
+
+    it('should update an index when an indexed column is modified', () => {
+        const mockNameIndex = {
+            insert: sinon.stub(),
+            delete: sinon.stub(),
+        };
+
+        t.createIndex('name', mockNameIndex);
+
+        t.insert({ id: 123, name: 'test', nonIndexed: 'ok'});
+        mockNameIndex.insert.reset();
+
+        t.update('id', 123, { name: 'other', extraProp: 'irrelevant' });
+
+        sinon.assert.calledOnce(mockNameIndex.delete);
+        sinon.assert.calledWithExactly(mockNameIndex.delete, 'test', 0);
+
+        sinon.assert.calledOnce(mockNameIndex.insert);
+        sinon.assert.calledWithExactly(mockNameIndex.insert, 'other', 0);
+    });
+
+    it('should not update an index of a column that was not modified', () => {
+        const mocknotUpdatedIndex = {
+            insert: sinon.stub(),
+            delete: sinon.stub(),
+        };
+        t.createIndex('notUpdated', mocknotUpdatedIndex);
+
+        t.insert({ id: 123, name: 'test', notUpdated: 'irrelevant' });
+        mocknotUpdatedIndex.insert.reset();
+
+        t.update('id', 123, { name: 'other', extraProp: 'irrelevant' });
+
+        sinon.assert.notCalled(mocknotUpdatedIndex.insert);
+        sinon.assert.notCalled(mocknotUpdatedIndex.delete);
+    });
 
     it('should update indexes on insert', () => {
         const mockIndex = {
@@ -165,8 +226,20 @@ describe('Table', () => {
         sinon.assert.calledWithExactly(mockIndex.lookup, 123);
     });
 
+    it('should get all non-deleted records', () => {
+        t.insert({ id: 123 });
+        t.insert({ id: 456 });
+        t.insert({ id: 789 });
+        t.delete('id', 456);
+
+        expect(t.allRecords().length).to.equal(2);
+        expect(t.allRecords()).to.deep.include.members([
+            { id: 123 },
+            { id: 789 }
+        ]);
+    });
+
     it('should integrate with the SkipList', () => {
-        const t = new Table();
         t.createIndex('id', new SkipList());
         t.createIndex('name', new SkipList());
         t.createIndex('birthday', new SkipList());
